@@ -17,25 +17,25 @@ const asyncHandler = (cb) => {
 
 const authenticateUser = () => {
     return async(req, res, next) =>{
-        let err;
+        let errorMessage;
         const credentials = auth(req);
-        if(credentials){
+        if (credentials) {
             const user = await User.findOne({where: {emailAddress: credentials.name}});
-            if(user){
-                const userSecret = bcrypt.compareSync(credentials.pass, user.dataValues.password);
-                if(userSecret){
+            if (user) {
+                const userSecret = bcrypt.compareSync(credentials.pass, user.password);
+                if (userSecret) {
                     req.currentUser = user;
-                }else{
-                    err = `Password did not match.`
+                } else {
+                    errorMessage = `Incorrect password.`
                 }
-            }else{
-                err = `No user was found.`
+            } else {
+                errorMessage = `User not found.`
             }
-        }else {
-            err = `Auth header was not found.`
+        } else {
+            errorMessage = `No basic authorization header.`
         }
-        if(err){
-            res.status(401).json({err})
+        if(errorMessage){
+            res.status(401).json({errorMessage})
         }
         next();
     }
@@ -94,21 +94,20 @@ router.get('/courses/:id', asyncHandler(async (req, res) => {
 }));
 
 //GET route for authenticated user
-router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
-    res.status(200).json(req.body);
+router.get('/users', authenticateUser(), asyncHandler(async (req, res, next) => {
+    res.status(200).json(req.currentUser);
 }));
 
 //POST route to add a new user to the database
-router.post('/users', asyncHandler(async(req, res) => {
-    let err;
-    try{
+router.post('/users', asyncHandler(async (req, res) => {
+    try {
         await User.create(req.body);
         res.location("/").status(201).end();
-    }catch(error){
-        if(error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError'){
-            let errors = [];
-            error.errors.forEach(err =>  errors.push(err.message));
-            res.status(400).json({errors});
+    } catch (error) {
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            let errorMessageArray = [];
+            error.errors.forEach(err =>  errorMessageArray.push(err.message));
+            res.status(400).json({errorMessageArray});
         } else {
             throw error;
         }
@@ -116,45 +115,62 @@ router.post('/users', asyncHandler(async(req, res) => {
 }));
 
 //POST route to add course 
-router.post('/courses', authenticateUser(), asyncHandler(async(req, res) => {
-    try{
-        console.log(req.req);
+router.post('/courses', authenticateUser(), asyncHandler(async (req, res) => {
+    try {
         const course =  await Course.create(req.body);  
-        res.location(`/courses/${course.dataValues.id}`);
+        res.location(`/courses/${course.id}`);
         res.status(201).end();
-    }catch(error){
-        if(error.name === 'SequelizeValidationError'){
-            let errors = []
-            error.errors.forEach(err => errors.push(err.message))
-            res.status(400).json({errors});
+    } catch (error) {
+        if (error.name === 'SequelizeValidationError') {
+            let errorMessageArray = [];
+            error.errors.forEach(each => errorMessageArray.push(each.message))
+            res.status(400).json({errorMessageArray});
         }
-        
-        throw error;
+    }
+}));
+
+//PUT route for editing course
+router.put('/courses/:id', authenticateUser(),asyncHandler(async(req, res) => {
+    let errorMessage;
+    if (req.body.title && req.body.description) {
+        let course = await Course.findByPk(req.params.id);
+        if (course) {
+            if (course.userId == req.currentUser.id) {
+                await course.update(req.body);
+                res.sendStatus(204);
+            } else {
+                errorMessage = `Only the owner can update this course.`;
+                res.status(403).json({err});
+            } 
+        } else {
+            errorMessage = 'Course not found.';
+        }  
+    }else{
+        err = `Please provide a title and description.`;
+    }
+    if(err){
+        res.status(400).json({err});
     }
 }));
 
 //DELETE route for specific course
-router.delete('/courses/:id', authenticateUser(),asyncHandler(async(req, res) => {
-    let course = await Course.findByPk(req.params.id);
-    let err;
-    if(course){
-        if(course.dataValues.userId == req.currentUser.dataValues.id){
+router.delete('/courses/:id', authenticateUser(), asyncHandler(async (req, res) => {
+    let errorMessage;
+    const course = await Course.findByPk(req.params.id);
+    if (course) {
+        if (course.userId == req.currentUser.id) {
             await course.destroy();
             res.sendStatus(204);
-        }else{
-            err = `Must be the owner of this course to delete.`;
+        } else {
+            errorMessage = `Only the owner can delete this course.`;
         }   
-    }else{
-        throw error = new Error('Query not found');
+    } else {
+        errorMessage = 'Course not found.';
     }
-    if(err){
-        res.status(403).json({err});
+    if (errorMessage) {
+        res.status(400).json({errorMessage});
     }
 }));
 
-//Test route
-router.get('/test', asyncHandler(async (req,res) => {
-    console.log(req.body);
-}))
 
 module.exports = router;
