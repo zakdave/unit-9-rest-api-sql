@@ -13,10 +13,10 @@ module.exports = (sequelize) => {
             allowNull: false,
             validate: {
                 notNull: {
-                    msg: 'A title is required',
+                    msg: 'A title is required.',
                 },
                 notEmpty: {
-                    msg: 'Please provide a title',
+                    msg: 'Title cannot be empty.',
                 },
             },
         },
@@ -28,7 +28,7 @@ module.exports = (sequelize) => {
                     msg: 'A description is required',
                 },
                 notEmpty: {
-                    msg: 'Please provide a description',
+                    msg: 'Description cannot be empty.',
                 },
             },
         },
@@ -40,7 +40,7 @@ module.exports = (sequelize) => {
         }
     },{ sequelize });
     
-    //DB association to the course module  
+    // Establish data relationship and FK
     Course.associate = (models) => {
         Course.belongsTo(models.User, {
             as: "User",

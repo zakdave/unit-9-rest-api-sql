@@ -28,7 +28,7 @@ app.use(morgan('dev'));
     console.log('Connection established to fsjstd-restapi.db')
     await sequelize.sync();
   } catch (error) {
-    console.log('Error connection to database: ', error)
+    console.log('Error connecting to database: ', error)
   }
 })();
 

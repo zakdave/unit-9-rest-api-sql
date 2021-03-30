@@ -14,10 +14,10 @@ module.exports = (sequelize) => {
             allowNull: false,
             validate:{
                 notNull: {
-                    msg: "Must provide a first name."
+                    msg: "A first name is required."
                 },
                 notEmpty: {
-                    msg: 'Must provide a first name.'
+                    msg: 'First name cannot be empty.'
                 }
             }
         },
@@ -26,10 +26,10 @@ module.exports = (sequelize) => {
             allowNull: false,
             validate:{
                 notNull: {
-                    msg: "Must provide a last name."
+                    msg: "A last name is required."
                 },
                 notEmpty: {
-                    msg: 'Must provide a last name.'
+                    msg: 'Last name cannot be empty'
                 }
             }
         },
@@ -39,13 +39,13 @@ module.exports = (sequelize) => {
             unique: true,
             validate:{
                 isEmail:{
-                    msg: 'Must provide a valid email address...'
+                    msg: 'A valid email address is required.'
                 },
                 notNull: {
                     msg: "Must provide a email address."
                 },
                 notEmpty: {
-                    msg: 'Must provide a email address.'
+                    msg: 'Email address cannot be empty.'
                 }
             }
         },
@@ -58,16 +58,16 @@ module.exports = (sequelize) => {
             },
             validate:{
                 notNull: {
-                    msg: "Must provide a password."
+                    msg: "A password is required."
                 },
                 notEmpty: {
-                    msg: 'Must provide a email address.'
+                    msg: 'Password cannot be empty.'
                 }
             }
         }
     },{ sequelize });
 
-    //DB association to the course module  
+    // Establish data relationship and FK  
     User.associate = (models) => {
         User.hasMany(models.Course, {
             as: "User",
